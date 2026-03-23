@@ -6,7 +6,7 @@ test('loadConfig resolves built-in DEX aliases into program filters', () => {
   const config = loadConfig({
     HELIUS_API_KEY: 'demo-key',
     DEX_PROGRAMS: 'jupiter,raydium-clmm',
-    LASERSTREAM_GRPC_ENDPOINT: 'https://laserstream-mainnet-ewr.helius-rpc.com',
+    LASERSTREAM_WS_ENDPOINT: 'wss://mainnet.helius-rpc.com/?api-key=demo-key',
   });
 
   assert.equal(config.programFilters.length, 2);

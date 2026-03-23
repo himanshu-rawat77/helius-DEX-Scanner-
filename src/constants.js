@@ -5,6 +5,6 @@ export const DEX_PROGRAMS = {
   'raydium-cpmm': 'CPMMoo8L3F4NbTegBCKVNunggL7H1ZpdTHKxQBpME8xQ',
 };
 
-export const DEFAULT_ENDPOINT = 'https://laserstream-mainnet-ewr.helius-rpc.com';
+export const DEFAULT_ENDPOINT = 'wss://mainnet.helius-rpc.com/?api-key=';
 export const DEFAULT_COMMITMENT = 'confirmed';
 export const DEFAULT_METRICS_PORT = 9464;

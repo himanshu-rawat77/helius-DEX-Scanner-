@@ -1,60 +1,53 @@
-function normalizeCommitment(commitment, levels) {
-  const normalized = String(commitment || '').toUpperCase();
-
-  switch (normalized) {
-    case 'PROCESSED':
-      return levels.PROCESSED;
-    case 'FINALIZED':
-      return levels.FINALIZED;
-    case 'CONFIRMED':
-    default:
-      return levels.CONFIRMED;
-  }
-}
-
-export function buildSubscribeRequest(config, commitmentLevel) {
+export function buildTransactionSubscribeRequest(config) {
   const accountInclude = [...config.programFilters.map((program) => program.programId), ...config.includeAccounts];
 
   return {
-    transactions: {
-      'dex-monitor': {
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'transactionSubscribe',
+    params: [
+      {
+        vote: false,
+        failed: false,
         accountInclude,
         accountExclude: config.excludeAccounts,
         accountRequired: config.requiredAccounts,
-        vote: false,
-        failed: false,
       },
-    },
-    commitment: normalizeCommitment(config.commitment, commitmentLevel),
-    accounts: {},
-    slots: {},
-    transactionsStatus: {},
-    blocks: {},
-    blocksMeta: {},
-    entry: {},
-    accountsDataSlice: [],
+      {
+        commitment: config.commitment,
+        encoding: 'jsonParsed',
+        transactionDetails: 'full',
+        maxSupportedTransactionVersion: 1,
+      },
+    ],
   };
 }
 
-export async function startLaserstreamSubscription(config, onMessage) {
-  if (!config.apiKey) {
-    throw new Error('HELIUS_API_KEY is required to connect to the LaserStream gRPC endpoint.');
+export function startLaserstreamBackedWebSocket(config, onMessage) {
+  if (!config.apiKey && config.endpoint === 'wss://mainnet.helius-rpc.com/?api-key=') {
+    throw new Error('HELIUS_API_KEY is required to connect to the Helius WebSocket endpoint.');
   }
 
-  const { subscribe, CommitmentLevel } = await import('helius-laserstream');
-  const request = buildSubscribeRequest(config, CommitmentLevel);
-
-  await subscribe(
-    {
-      apiKey: config.apiKey,
-      endpoint: config.endpoint,
-    },
-    request,
-    async (data) => {
-      onMessage(data);
-    },
-    async (error) => {
-      console.error('LaserStream stream error:', error);
+  const socket = new WebSocket(config.endpoint);
+  const ping = setInterval(() => {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ jsonrpc: '2.0', id: Date.now(), method: 'ping' }));
     }
-  );
+  }, 60_000);
+
+  socket.addEventListener('open', () => {
+    socket.send(JSON.stringify(buildTransactionSubscribeRequest(config)));
+  });
+
+  socket.addEventListener('message', (event) => {
+    const payload = JSON.parse(event.data);
+    onMessage(payload);
+  });
+
+  socket.addEventListener('close', () => clearInterval(ping));
+  socket.addEventListener('error', (error) => {
+    console.error('WebSocket stream error:', error.message || error);
+  });
+
+  return socket;
 }

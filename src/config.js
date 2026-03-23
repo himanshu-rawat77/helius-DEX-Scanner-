@@ -17,9 +17,15 @@ function parseProgramSelection(rawValue) {
 }
 
 export function loadConfig(env = process.env) {
+  const apiKey = env.HELIUS_API_KEY || '';
+  const baseEndpoint = env.LASERSTREAM_WS_ENDPOINT || env.HELIUS_WS_ENDPOINT || DEFAULT_ENDPOINT;
+  const endpoint = baseEndpoint.includes('?api-key=') || !apiKey
+    ? baseEndpoint
+    : `${baseEndpoint}${apiKey}`;
+
   return {
-    apiKey: env.HELIUS_API_KEY || '',
-    endpoint: env.LASERSTREAM_GRPC_ENDPOINT || env.LASERSTREAM_ENDPOINT || DEFAULT_ENDPOINT,
+    apiKey,
+    endpoint,
     commitment: env.COMMITMENT || DEFAULT_COMMITMENT,
     metricsPort: Number.parseInt(env.METRICS_PORT || `${DEFAULT_METRICS_PORT}`, 10),
     programFilters: parseProgramSelection(env.DEX_PROGRAMS),
