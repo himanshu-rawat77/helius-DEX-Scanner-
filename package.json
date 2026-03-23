@@ -1,0 +1,15 @@
+{
+  "name": "helius-dex-scanner",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Real-time DEX monitor for Jupiter and Raydium swaps using Helius LaserStream gRPC and Grafana.",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "helius-laserstream": "^0.2.0"
+  }
+}
